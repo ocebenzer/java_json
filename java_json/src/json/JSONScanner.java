@@ -37,7 +37,7 @@ public class JSONScanner {
 
         scanner.useDelimiter(".*");
         trimWhitespace();
-        JSONValue result = this.parseJSON();
+        JSONValue result = this.parseValue();
         
         scanner.close();
         stringReader.close();
@@ -60,6 +60,7 @@ public class JSONScanner {
     private char read1() throws ParseException {
         try {
             char c = (char) stringReader.read();
+            trimWhitespace();
             return c;
         }
         catch (IOException e) {
@@ -68,11 +69,16 @@ public class JSONScanner {
     }
 
     private void trimWhitespace() {
-        scanner.skip(whitespace);
+        try {
+            for (char c = peek(); c == ' ' || c == '\n' || c == '\t' || c == ' '; c = (char) stringReader.read()) { }
+        }
+        catch (Exception e) {
+            return;
+        }
     }
 
     /// LL1 Parsing - First(1) Lookahead Table
-    private JSONValue parseJSON() throws ParseException {
+    private JSONValue parseValue() throws ParseException {
         char c = peek();
         switch (c) {
             case '{':
@@ -120,57 +126,47 @@ public class JSONScanner {
         HashMap<String, JSONValue> dict = new HashMap<>();
 
         trimWhitespace();
-        for (c = peek(); c != '}'; c = peek()) {
-            String key = scanner.next(KeyValDelimiter);
+        for (c = peek(); c != '}'; c = read1()) {
+            String key = parseString();
 
-            if (peek() != ':') {
+            c = read1();
+            if (c != ':') {
                 throw new ParseException(":", (char) c);
             }
-            
-            dict.put(key, parseJSON());
 
-            String delimiter = scanner.findInLine(JSONEnd);
-            if (delimiter.equals("}")) {
-                break;
-            }
-            else if (delimiter.equals(",")) {
-                continue;
-            }
-            else {
-                throw new ParseException(",|}", delimiter);
+            JSONValue value = parseValue();
+            dict.put(key, value);
+
+            c = peek();
+            if (c != ',' && c != '}') {
+                throw new ParseException(",|}", (char) c);
             }
         }
-
-        // consume '}'
-        c = read1();
-        trimWhitespace();
 
         return dict;
     }
 
     private ArrayList<JSONValue> parseList() throws ParseException {
-        char c = peek();
+        int c = read1();
         if (c != '[') {
-            throw new ParseException("[", c);
+            throw new ParseException("[", (char) c);
+        }
+        if (c == -1) {
+            throw new ParseException("[", "EOF");
         }
 
         ArrayList<JSONValue> list = new ArrayList<>();
-        while (true) {
-            String s = scanner.next(JSONEnd);
-            list.add(parseJSON());
 
-            String delimiter = scanner.findInLine(JSONEnd);
-            if (delimiter.equals("]")) {
-                break;
-            }
-            else if (delimiter.equals(",")) {
-                continue;
-            }
-            else {
-                throw new ParseException(",|]", delimiter);
+        for (c = peek(); c != ']'; c = read1()) {
+            JSONValue value = parseValue();
+            list.add(value);
+
+            c = peek();
+            if (c != ',' && c != ']') {
+                throw new ParseException(",|]", (char) c);
             }
         }
-        
+
         return list;
     }
 
@@ -184,11 +180,19 @@ public class JSONScanner {
     }
 
     private String parseString() throws ParseException {
-        String s = scanner.findWithinHorizon(_string, Integer.MAX_VALUE);
-        if (s == null) {
-            throw new ParseException("\"<STRING>\"", s);
+        char c = read1();
+        if (c != '"') {
+            throw new ParseException("\"", c);
         }
-        String value = s.substring(1, s.length() - 1);
-        return value;
+
+        StringBuilder sb = new StringBuilder();
+
+        boolean escape_character_read = false;
+        for (c = read1(); escape_character_read || c != '"'; c = read1()) {
+            sb.append(c);
+            escape_character_read = c == '\\';
+        }
+
+        return sb.toString();
     }
 }
