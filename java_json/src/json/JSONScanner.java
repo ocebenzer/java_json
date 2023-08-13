@@ -9,24 +9,25 @@ import java.util.regex.Pattern;
 
 import subtypes.JSONBoolean;
 import subtypes.JSONDictionary;
-import subtypes.JSONDouble;
-import subtypes.JSONInteger;
+import subtypes.JSONNumber;
 import subtypes.JSONList;
 import subtypes.JSONNull;
 import subtypes.JSONString;
 
 public class JSONScanner {
-    private static final Pattern nextChar = Pattern.compile(".");
+    private static final Pattern nextChar = Pattern.compile("^.");
 
-    private static final Pattern JSONEnd = Pattern.compile("]|}|,");
+    private static final Pattern JSONEnd = Pattern.compile("^(]|}|,)");
 
-    private static final Pattern KeyValDelimiter = Pattern.compile(":");
-
-    /// supports +_0, 0e5, .5, 12. 
-    private static final Pattern _double = Pattern.compile("(^([+-]?(?:[[:d:]]+\\.?|[[:d:]]*\\.[[:d:]]+))(?:[Ee][+-]?[[:d:]]+)?$)");
+    private static final Pattern KeyValDelimiter = Pattern.compile("^:");
 
     /// between two " not preceded by \
-    private static final Pattern _string = Pattern.compile("^\"(.*?)(?<!\\\\)\"");
+    private static final Pattern _string = Pattern.compile("^(\"(.*?)(?<!\\\\)\")", Pattern.DOTALL);
+
+    /// supports +_0, 0e5, .5, 12. 
+    private static final Pattern _number = Pattern.compile("^(-?(0|([1-9][0-9]*))(.[0-9]+)?([eE][+-]?[0-9]+)?)");
+
+    private static final Pattern _boolean = Pattern.compile("^(true|false)");
 
     private StringReader stringReader;
     private Scanner scanner;
@@ -76,6 +77,8 @@ public class JSONScanner {
             case '7':
             case '8':
             case '9':
+            case '+':
+            case '-':
                 return parseNumber();
             case '[':
                 return parseList();
@@ -144,22 +147,25 @@ public class JSONScanner {
     }
 
     private JSON parseNumber() throws ParseException {
-        String s = scanner.next();
-
-        if (_double.matcher(s).find()) {
-            return new JSONDouble(Double.parseDouble(s));
+        String s = scanner.findInLine(_number);
+        if (s != null) {
+            return new JSONNumber(Double.parseDouble(s));
         }
-        return new JSONInteger(Integer.parseInt(s));
+
+        throw new ParseException("<NUMBER>", s);
     }
 
     private JSON parseString() throws ParseException {
-        String s = scanner.findInLine(_string);
+        String s = scanner.findWithinHorizon(_string, Integer.MAX_VALUE);
+        if (s == null) {
+            throw new ParseException("\"<STRING>\"", s);
+        }
         String value = s.substring(1, s.length() - 1);
         return new JSONString(value);
     }
 
     private JSON parseBoolean() throws ParseException {
-        String s = scanner.next();
+        String s = scanner.findInLine(_boolean);
 
         if (s.equals("true")) {
             return new JSONBoolean(true);

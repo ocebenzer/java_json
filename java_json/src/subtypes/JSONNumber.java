@@ -2,10 +2,10 @@ package subtypes;
 
 import json.JSON;
 
-public class JSONDouble extends JSON {
+public class JSONNumber extends JSON {
     private double value;
 
-    public JSONDouble(double value) {
+    public JSONNumber(double value) {
         this.value = value;
     }
 
