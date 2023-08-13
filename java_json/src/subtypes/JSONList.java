@@ -1,13 +1,14 @@
-package types;
+package subtypes;
 
 import java.util.ArrayList;
-import java.util.Scanner;
+
+import json.JSON;
 
 public class JSONList extends JSON {
     private ArrayList<JSON> value;
 
-    public JSONList(Scanner s) {
-        super(s);
+    public JSONList(ArrayList<JSON> value) {
+        this.value = value;
     }
 
     public ArrayList<JSON> getValue() {

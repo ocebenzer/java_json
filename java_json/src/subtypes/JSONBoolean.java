@@ -1,12 +1,12 @@
-package types;
+package subtypes;
 
-import java.util.Scanner;
+import json.JSON;
 
 public class JSONBoolean extends JSON {
     private boolean value;
 
-    public JSONBoolean(Scanner s) {
-        super(s);
+    public JSONBoolean(boolean value) {
+        this.value = value;
     }
 
     public boolean getValue() {

@@ -1,3 +1,5 @@
 .vscode
 
+*.jar
+
 java_json/bin/

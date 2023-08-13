@@ -1,15 +1,13 @@
-package types;
+package subtypes;
 
-import java.util.Scanner;
+import json.JSON;
 
 public class JSONInteger extends JSON {
     private int value;
 
-    public JSONInteger(Scanner s) {
-        super(s);
-        value = s.nextInt();
+    public JSONInteger(int value) {
+        this.value = value;
     }
-
 
     public int getValue() {
         return this.value;

@@ -1,12 +1,12 @@
-package types;
+package subtypes;
 
-import java.util.Scanner;
+import json.JSON;
 
 public class JSONDouble extends JSON {
     private double value;
 
-    public JSONDouble(Scanner s) {
-        super(s);
+    public JSONDouble(double value) {
+        this.value = value;
     }
 
     public double getValue() {
