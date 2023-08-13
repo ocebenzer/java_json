@@ -7,15 +7,16 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-import subtypes.JSONBoolean;
-import subtypes.JSONDictionary;
-import subtypes.JSONNumber;
-import subtypes.JSONList;
-import subtypes.JSONNull;
-import subtypes.JSONString;
+import subvalues.JSONTrue;
+import subvalues.JSONObject;
+import subvalues.JSONFalse;
+import subvalues.JSONArray;
+import subvalues.JSONNull;
+import subvalues.JSONNumber;
+import subvalues.JSONString;
 
 public class JSONScanner {
-    private static final Pattern nextChar = Pattern.compile("^.");
+    private static final Pattern whitespace = Pattern.compile("[\\n\\t ]*");
 
     private static final Pattern JSONEnd = Pattern.compile("^(]|}|,)");
 
@@ -27,25 +28,24 @@ public class JSONScanner {
     /// supports +_0, 0e5, .5, 12. 
     private static final Pattern _number = Pattern.compile("^(-?(0|([1-9][0-9]*))(.[0-9]+)?([eE][+-]?[0-9]+)?)");
 
-    private static final Pattern _boolean = Pattern.compile("^(true|false)");
-
     private StringReader stringReader;
     private Scanner scanner;
 
-    public JSON parse(String string) throws ParseException {
+    public JSONValue parse(String string) throws ParseException {
         stringReader = new StringReader(string);
         scanner = new Scanner(stringReader);
 
         scanner.useDelimiter(".*");
-        JSON result = this.parseJSON();
+        trimWhitespace();
+        JSONValue result = this.parseJSON();
         
         scanner.close();
         stringReader.close();
         return result;
     }
 
-    /// peek next char without reading
-    private char peek() {
+    /// return next char without moving forward
+    private char peek() throws ParseException {
         try {
             stringReader.mark(1);
             char c = (char) stringReader.read();
@@ -53,20 +53,35 @@ public class JSONScanner {
             return c;
         }
         catch (IOException e) {
-            return '\0';
+            throw new ParseException(e.getLocalizedMessage());
         }
     }
 
-    private JSON parseJSON() throws ParseException {
+    private char read1() throws ParseException {
+        try {
+            char c = (char) stringReader.read();
+            return c;
+        }
+        catch (IOException e) {
+            throw new ParseException(e.getLocalizedMessage());
+        }
+    }
+
+    private void trimWhitespace() {
+        scanner.skip(whitespace);
+    }
+
+    /// LL1 Parsing - First(1) Lookahead Table
+    private JSONValue parseJSON() throws ParseException {
         char c = peek();
         switch (c) {
-            case 'n':
-                return parseNull();
-            case 't':
-            case 'f':
-                return parseBoolean();
+            case '{':
+                return new JSONObject(parseObject());
+            case '[':
+                return new JSONArray(parseList());
             case '"':
-                return parseString();
+                return new JSONString(parseString());
+            case '-':
             case '0':
             case '1':
             case '2':
@@ -77,30 +92,39 @@ public class JSONScanner {
             case '7':
             case '8':
             case '9':
-            case '+':
-            case '-':
-                return parseNumber();
-            case '[':
-                return parseList();
-            case '{':
-                return parseDictionary();
+                return new JSONNumber(parseNumber());
+            case 't':
+                return new JSONTrue();
+            case 'f':
+                return new JSONFalse();
+            case 'n':
+                return new JSONNull();
             default:
-                throw new ParseException("<JSON_BEGIN>", c);
+                throw new ParseException("Unexpected character: " + c);
         }
     }
 
-    private JSON parseDictionary() throws ParseException {
-        char c = peek();
+    /*
+     * Object :- '{' <whitespace> '}'
+     * Object :- '{' <(<Key>:<Value>)+> '}'
+     */
+    private HashMap<String, JSONValue> parseObject() throws ParseException {
+        int c = read1();
         if (c != '{') {
-            throw new ParseException("{", c);
+            throw new ParseException("{", (char) c);
+        }
+        if (c == -1) {
+            throw new ParseException("{", "EOF");
         }
 
-        HashMap<String, JSON> dict = new HashMap<>();
-        while (true) {
+        HashMap<String, JSONValue> dict = new HashMap<>();
+
+        trimWhitespace();
+        for (c = peek(); c != '}'; c = peek()) {
             String key = scanner.next(KeyValDelimiter);
 
             if (peek() != ':') {
-                throw new ParseException(":", c);
+                throw new ParseException(":", (char) c);
             }
             
             dict.put(key, parseJSON());
@@ -117,16 +141,20 @@ public class JSONScanner {
             }
         }
 
-        return new JSONDictionary(dict);
+        // consume '}'
+        c = read1();
+        trimWhitespace();
+
+        return dict;
     }
 
-    private JSON parseList() throws ParseException {
+    private ArrayList<JSONValue> parseList() throws ParseException {
         char c = peek();
         if (c != '[') {
             throw new ParseException("[", c);
         }
 
-        ArrayList<JSON> list = new ArrayList<>();
+        ArrayList<JSONValue> list = new ArrayList<>();
         while (true) {
             String s = scanner.next(JSONEnd);
             list.add(parseJSON());
@@ -143,41 +171,24 @@ public class JSONScanner {
             }
         }
         
-        return new JSONList(list);
+        return list;
     }
 
-    private JSON parseNumber() throws ParseException {
+    private Double parseNumber() throws ParseException {
         String s = scanner.findInLine(_number);
         if (s != null) {
-            return new JSONNumber(Double.parseDouble(s));
+            return Double.parseDouble(s);
         }
 
         throw new ParseException("<NUMBER>", s);
     }
 
-    private JSON parseString() throws ParseException {
+    private String parseString() throws ParseException {
         String s = scanner.findWithinHorizon(_string, Integer.MAX_VALUE);
         if (s == null) {
             throw new ParseException("\"<STRING>\"", s);
         }
         String value = s.substring(1, s.length() - 1);
-        return new JSONString(value);
-    }
-
-    private JSON parseBoolean() throws ParseException {
-        String s = scanner.findInLine(_boolean);
-
-        if (s.equals("true")) {
-            return new JSONBoolean(true);
-        }
-        else if (s.equals("false")) {
-            return new JSONBoolean(false);
-        }
-
-        throw new ParseException("true|false", s);
-    }
-
-    private JSON parseNull() throws ParseException {
-        return new JSONNull();
+        return value;
     }
 }

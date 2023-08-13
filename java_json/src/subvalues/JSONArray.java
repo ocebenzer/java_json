@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import json.JSONValue;
 
-public class JSONList extends JSONValue {
-    public JSONList(ArrayList<JSONValue> value) {
+public class JSONArray extends JSONValue {
+    public JSONArray(ArrayList<JSONValue> value) {
         super(value);
     }
 }
