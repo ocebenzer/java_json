@@ -3,38 +3,35 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import json.JSON;
+import json.JSONValue;
 import json.ParseException;
-
-import subtypes.JSONString;
+import subvalues.JSONString;
 
 public class TestJSONString {
     @Test
     public void testEmptyString() throws ParseException {
-        JSON json = JSON.parse("\"\"");
+        JSONValue json = JSONValue.parse("\"\"");
 
         assertTrue(json instanceof JSONString);
         assertEquals("",
-            ((JSONString) json).getValue());
+            ((JSONString) json).get());
     }
 
     @Test
     public void testSimpleString() throws ParseException {
         String string_body = "According to all known laws of aviation, there is no way that a bee should be able to fly.";
-        JSON json = JSON.parse("\"" + string_body + "\"");
+        JSONValue json = JSONValue.parse("\"" + string_body + "\"");
 
         assertTrue(json instanceof JSONString);
-        assertEquals(string_body,
-            ((JSONString) json).getValue());
+        assertEquals(string_body, json.get());
     }
 
     @Test
     public void testMultilineString() throws ParseException {
         String string_body = "Hello World!\nThis is a \\\"string\\\"\n";
-        JSON json = JSON.parse("\"" + string_body + "\"");
+        JSONValue json = JSONValue.parse("\"" + string_body + "\"");
 
         assertTrue(json instanceof JSONString);
-        assertEquals(string_body,
-            ((JSONString) json).getValue());
+        assertEquals(string_body, json.get());
     }
 }

@@ -3,26 +3,25 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import json.JSON;
+import json.JSONValue;
 import json.ParseException;
-import subtypes.JSONBoolean;
+import subvalues.JSONFalse;
+import subvalues.JSONTrue;
 
 public class TestJSONBoolean {
     @Test
     public void testTrue() throws ParseException {
-        JSON json = JSON.parse("true");
+        JSONValue json = JSONValue.parse("true");
 
-        assertTrue(json instanceof JSONBoolean);
-        assertEquals(true,
-            ((JSONBoolean) json).getValue());
+        assertTrue(json instanceof JSONTrue);
+        assertEquals(true, json.get());
     }
 
     @Test
     public void testFalse() throws ParseException {
-        JSON json = JSON.parse("false");
+        JSONValue json = JSONValue.parse("false");
 
-        assertTrue(json instanceof JSONBoolean);
-        assertEquals(false,
-            ((JSONBoolean) json).getValue());
+        assertTrue(json instanceof JSONFalse);
+        assertEquals(false, json.get());
     }
 }
