@@ -24,4 +24,25 @@ public class JSONArray extends JSONValue {
 
         return sb.toString();
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof JSONArray)) {
+            return false;
+        }
+
+        ArrayList<JSONValue> v1 = (ArrayList<JSONValue>) this.get();
+        ArrayList<JSONValue> v2 = (ArrayList<JSONValue>) ((JSONArray) other).get();
+        if (v1.size() != v2.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < v1.size(); i++) {
+            if (!v1.get(i).equals(v2.get(i))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

@@ -11,4 +11,9 @@ public class JSONNull extends JSONValue {
     public String toString() {
         return "null";
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof JSONNull;
+    }
 }

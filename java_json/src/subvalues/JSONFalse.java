@@ -11,4 +11,9 @@ public class JSONFalse extends JSONValue {
     public String toString() {
         return "false";
     }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof JSONFalse;
+    }
 }

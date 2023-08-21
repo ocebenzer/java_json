@@ -25,10 +25,16 @@ public class JSONScanner {
     }
 
     private char peek() {
+        if (index >= this.string.length()) {
+            return '\0';
+        }
         return this.string.charAt(index);
     }
 
     private char peek(int customIndex) {
+        if (customIndex >= this.string.length()) {
+            return '\0';
+        }
         return this.string.charAt(customIndex);
     }
 
@@ -95,7 +101,7 @@ public class JSONScanner {
         HashMap<String, JSONValue> dict = new HashMap<>();
 
         trimWhitespace();
-        for (c = this.peek(); c != '}'; c = this.peek()) {
+        for (c = this.peek(); c != '}'; c = this.read1()) {
             String key = parseString();
 
             trimWhitespace();
@@ -128,12 +134,12 @@ public class JSONScanner {
         ArrayList<JSONValue> list = new ArrayList<>();
 
         trimWhitespace();
-        for (c = this.peek(); c != ']'; c = this.peek()) {
+        for (c = this.peek(); c != ']'; c = this.read1()) {
             JSONValue value = parseValue();
             list.add(value);
 
             trimWhitespace();
-            c = peek();
+            c = this.peek();
             if (c != ',' && c != ']') {
                 throw new ParseException(",|]", (char) c);
             }
@@ -158,7 +164,7 @@ public class JSONScanner {
 
     private Double parseNumber() throws ParseException {
         int indexEnd = this.index;
-        char c = this.peek(indexEnd);
+        char c = this.peek(indexEnd++);
 
         // number
         if (c == '-') {
@@ -178,7 +184,7 @@ public class JSONScanner {
         }
 
         // fraction
-        if (this.peek(indexEnd) == '.') {
+        if (c == '.') {
             c = this.peek(indexEnd++);
             while (c >= '0' && c <= '9') {
                 c = this.peek(indexEnd++);
@@ -196,7 +202,8 @@ public class JSONScanner {
             }
         }
 
-        String extractedString = this.string.substring(index, indexEnd);
+        String extractedString = this.string.substring(index, indexEnd - 1);
+        index = indexEnd - 1;
         return Double.valueOf(extractedString);
     }
 
@@ -205,6 +212,8 @@ public class JSONScanner {
         if (!value.equals("true")) {
             throw new ParseException("true", value);
         }
+
+        index += 4;
     }
 
     private void parseFalse() throws ParseException {
@@ -212,6 +221,8 @@ public class JSONScanner {
         if (!value.equals("false")) {
             throw new ParseException("false", value);
         }
+
+        index += 5;
     }
 
     private void parseNull() throws ParseException {
@@ -219,5 +230,7 @@ public class JSONScanner {
         if (!value.equals("null")) {
             throw new ParseException("null", value);
         }
+
+        index += 4;
     }
 }
