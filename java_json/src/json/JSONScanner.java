@@ -102,6 +102,7 @@ public class JSONScanner {
 
         trimWhitespace();
         for (c = this.peek(); c != '}'; c = this.read1()) {
+            trimWhitespace();
             String key = parseString();
 
             trimWhitespace();
