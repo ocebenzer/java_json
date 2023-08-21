@@ -107,7 +107,6 @@ public class JSONScanner {
 
             trimWhitespace();
             c = this.read1();
-
             if (c != ':') {
                 throw new ParseException(":", (char) c);
             }
@@ -117,7 +116,6 @@ public class JSONScanner {
 
             trimWhitespace();
             c = peek();
-
             if (c != ',' && c != '}') {
                 throw new ParseException(",|}", (char) c);
             }
@@ -127,7 +125,7 @@ public class JSONScanner {
     }
 
     private ArrayList<JSONValue> parseList() throws ParseException {
-        char c = read1();
+        char c = this.read1();
         if (c != '[') {
             throw new ParseException("[", (char) c);
         }
