@@ -16,70 +16,41 @@ import subvalues.JSONNumber;
 import subvalues.JSONString;
 
 public class JSONScanner {
-    private static final Pattern whitespace = Pattern.compile("[\\n\\t ]*");
+    private String string;
+    private int index;
 
-    private static final Pattern JSONEnd = Pattern.compile("^(]|}|,)");
-
-    private static final Pattern KeyValDelimiter = Pattern.compile("^:");
-
-    /// between two " not preceded by \
-    private static final Pattern _string = Pattern.compile("^(\"(.*?)(?<!\\\\)\")", Pattern.DOTALL);
-
-    /// supports +_0, 0e5, .5, 12. 
-    private static final Pattern _number = Pattern.compile("^(-?(0|([1-9][0-9]*))(.[0-9]+)?([eE][+-]?[0-9]+)?)");
-
-    private StringReader stringReader;
-    private Scanner scanner;
-
-    public JSONValue parse(String string) throws ParseException {
-        stringReader = new StringReader(string);
-        scanner = new Scanner(stringReader);
-
-        scanner.useDelimiter(".*");
-        trimWhitespace();
-        JSONValue result = this.parseValue();
-        
-        scanner.close();
-        stringReader.close();
-        return result;
+    public JSONScanner(String string) {
+        this.string = string;
+        this.index = 0;
     }
 
-    /// return next char without moving forward
-    private char peek() throws ParseException {
-        try {
-            stringReader.mark(1);
-            char c = (char) stringReader.read();
-            stringReader.reset();
-            return c;
-        }
-        catch (IOException e) {
-            throw new ParseException(e.getLocalizedMessage());
-        }
+    public JSONValue parse() throws ParseException {
+        return this.parseValue();
     }
 
-    private char read1() throws ParseException {
-        try {
-            char c = (char) stringReader.read();
-            trimWhitespace();
-            return c;
-        }
-        catch (IOException e) {
-            throw new ParseException(e.getLocalizedMessage());
-        }
+    private char peek() {
+        return this.string.charAt(index);
+    }
+
+    private char peek(int customIndex) {
+        return this.string.charAt(customIndex);
+    }
+
+    private char read1() {
+        return this.string.charAt(index++);
     }
 
     private void trimWhitespace() {
-        try {
-            for (char c = peek(); c == ' ' || c == '\n' || c == '\t' || c == ' '; c = (char) stringReader.read()) { }
-        }
-        catch (Exception e) {
-            return;
+        for (char c = peek();
+                c == ' ' || c == '\n' || c == '\t' || c == ' ';
+                c = this.peek()) {
+            index++;
         }
     }
 
     /// LL1 Parsing - First(1) Lookahead Table
     private JSONValue parseValue() throws ParseException {
-        char c = peek();
+        char c = this.peek();
         switch (c) {
             case '{':
                 return new JSONObject(parseObject());
@@ -98,6 +69,7 @@ public class JSONScanner {
             case '7':
             case '8':
             case '9':
+            // case '.': // Not in JSON Standarts
                 return new JSONNumber(parseNumber());
             case 't':
                 return new JSONTrue();
@@ -115,21 +87,18 @@ public class JSONScanner {
      * Object :- '{' <(<Key>:<Value>)+> '}'
      */
     private HashMap<String, JSONValue> parseObject() throws ParseException {
-        int c = read1();
+        int c = this.read1();
         if (c != '{') {
             throw new ParseException("{", (char) c);
-        }
-        if (c == -1) {
-            throw new ParseException("{", "EOF");
         }
 
         HashMap<String, JSONValue> dict = new HashMap<>();
 
         trimWhitespace();
-        for (c = peek(); c != '}'; c = read1()) {
+        for (c = this.peek(); c != '}'; c = this.peek()) {
             String key = parseString();
 
-            c = read1();
+            c = this.read1();
             if (c != ':') {
                 throw new ParseException(":", (char) c);
             }
@@ -151,13 +120,12 @@ public class JSONScanner {
         if (c != '[') {
             throw new ParseException("[", (char) c);
         }
-        if (c == -1) {
-            throw new ParseException("[", "EOF");
-        }
+
+        c = read1();
 
         ArrayList<JSONValue> list = new ArrayList<>();
 
-        for (c = peek(); c != ']'; c = read1()) {
+        while (c != ']') {
             JSONValue value = parseValue();
             list.add(value);
 
@@ -171,28 +139,66 @@ public class JSONScanner {
     }
 
     private Double parseNumber() throws ParseException {
-        String s = scanner.findInLine(_number);
-        if (s != null) {
-            return Double.parseDouble(s);
+        int indexEnd = this.index;
+        char c = this.peek(indexEnd);
+
+        // number
+        if (c == '-') {
+            c = this.peek(indexEnd++);
         }
 
-        throw new ParseException("<NUMBER>", s);
+        if (c == '0') {
+            c = this.peek(indexEnd++);
+        }
+        else {
+            if (c <= '0' || c > '9') {
+                throw new ParseException("[1-9]", c);
+            }
+            while (c >= '0' && c <= '9') {
+                c = this.peek(indexEnd++);
+            }
+        }
+
+        // fraction
+        if (this.peek(indexEnd) == '.') {
+            c = this.peek(indexEnd++);
+            while (c >= '0' && c <= '9') {
+                c = this.peek(indexEnd++);
+            }
+        }
+
+        // exponent
+        if (c == 'e' || c == 'E') {
+            c = this.peek(indexEnd++);
+            if (c == '+' || c == '-') {
+                c = this.peek(indexEnd++);
+            }
+            while (c >= '0' && c <= '9') {
+                c = this.peek(indexEnd++);
+            }
+        }
+
+        String extractedString = this.string.substring(index, indexEnd);
+        return Double.valueOf(extractedString);
     }
 
     private String parseString() throws ParseException {
-        char c = read1();
+        int indexEnd = this.index;
+        char c = this.peek(indexEnd);
+        boolean is_escape_character = false;
+
         if (c != '"') {
             throw new ParseException("\"", c);
         }
 
-        StringBuilder sb = new StringBuilder();
-
-        boolean escape_character_read = false;
-        for (c = read1(); escape_character_read || c != '"'; c = read1()) {
-            sb.append(c);
-            escape_character_read = c == '\\';
+        while (is_escape_character || c != '"') {
+            if (c == '\\') {
+                is_escape_character = true;
+            }
+            indexEnd++;
         }
 
-        return sb.toString();
+        String extractedString = this.string.substring(index, indexEnd);
+        return extractedString;
     }
 }

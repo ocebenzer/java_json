@@ -13,8 +13,7 @@ public class TestJSONString {
         JSONValue json = JSONValue.parse("\"\"");
 
         assertTrue(json instanceof JSONString);
-        assertEquals("",
-            ((JSONString) json).get());
+        assertEquals("", json.get());
     }
 
     @Test

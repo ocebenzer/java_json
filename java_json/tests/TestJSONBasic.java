@@ -6,9 +6,16 @@ import org.junit.Test;
 import json.JSONValue;
 import json.ParseException;
 import subvalues.JSONFalse;
+import subvalues.JSONNull;
 import subvalues.JSONTrue;
 
-public class TestJSONBoolean {
+public class TestJSONBasic {
+    @Test
+    public void testNull() throws ParseException {
+        JSONValue json = JSONValue.parse("null");
+        assertTrue(json instanceof JSONNull);
+    }
+    
     @Test
     public void testTrue() throws ParseException {
         JSONValue json = JSONValue.parse("true");
