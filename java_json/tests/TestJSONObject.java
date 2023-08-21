@@ -21,7 +21,7 @@ public class TestJSONObject {
 
     @Test
     public void TestEmptyObject2() throws ParseException {
-        JSONValue json = JSONValue.parse("{ \n }");
+        JSONValue json = JSONValue.parse(" { \n } ");
         HashMap<String, JSONValue> expected = new HashMap<>();
 
         assertTrue(json instanceof JSONObject);

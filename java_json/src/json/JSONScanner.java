@@ -1,11 +1,7 @@
 package json;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Scanner;
-import java.util.regex.Pattern;
 
 import subvalues.JSONTrue;
 import subvalues.JSONObject;
@@ -50,6 +46,7 @@ public class JSONScanner {
 
     /// LL1 Parsing - First(1) Lookahead Table
     private JSONValue parseValue() throws ParseException {
+        trimWhitespace();
         char c = this.peek();
         switch (c) {
             case '{':
@@ -72,10 +69,13 @@ public class JSONScanner {
             // case '.': // Not in JSON Standarts
                 return new JSONNumber(parseNumber());
             case 't':
+                parseTrue();
                 return new JSONTrue();
             case 'f':
+                parseFalse();
                 return new JSONFalse();
             case 'n':
+                parseNull();
                 return new JSONNull();
             default:
                 throw new ParseException("Unexpected character: " + c);
@@ -87,7 +87,7 @@ public class JSONScanner {
      * Object :- '{' <(<Key>:<Value>)+> '}'
      */
     private HashMap<String, JSONValue> parseObject() throws ParseException {
-        int c = this.read1();
+        char c = this.read1();
         if (c != '{') {
             throw new ParseException("{", (char) c);
         }
@@ -98,7 +98,9 @@ public class JSONScanner {
         for (c = this.peek(); c != '}'; c = this.peek()) {
             String key = parseString();
 
+            trimWhitespace();
             c = this.read1();
+
             if (c != ':') {
                 throw new ParseException(":", (char) c);
             }
@@ -106,7 +108,9 @@ public class JSONScanner {
             JSONValue value = parseValue();
             dict.put(key, value);
 
+            trimWhitespace();
             c = peek();
+
             if (c != ',' && c != '}') {
                 throw new ParseException(",|}", (char) c);
             }
@@ -116,19 +120,19 @@ public class JSONScanner {
     }
 
     private ArrayList<JSONValue> parseList() throws ParseException {
-        int c = read1();
+        char c = read1();
         if (c != '[') {
             throw new ParseException("[", (char) c);
         }
 
-        c = read1();
-
         ArrayList<JSONValue> list = new ArrayList<>();
 
-        while (c != ']') {
+        trimWhitespace();
+        for (c = this.peek(); c != ']'; c = this.peek()) {
             JSONValue value = parseValue();
             list.add(value);
 
+            trimWhitespace();
             c = peek();
             if (c != ',' && c != ']') {
                 throw new ParseException(",|]", (char) c);
@@ -136,6 +140,20 @@ public class JSONScanner {
         }
 
         return list;
+    }
+
+    private String parseString() throws ParseException {
+        this.index++;
+        int indexEnd = this.index;
+        boolean is_escape_character = false;
+
+        for (char c = this.peek(indexEnd++); is_escape_character || c != '"'; c = this.peek(indexEnd++)) {
+            is_escape_character = !is_escape_character && c == '\\';
+        }
+
+        String extractedString = this.string.substring(index, indexEnd - 1);
+        index = indexEnd;
+        return extractedString;
     }
 
     private Double parseNumber() throws ParseException {
@@ -182,23 +200,24 @@ public class JSONScanner {
         return Double.valueOf(extractedString);
     }
 
-    private String parseString() throws ParseException {
-        int indexEnd = this.index;
-        char c = this.peek(indexEnd);
-        boolean is_escape_character = false;
-
-        if (c != '"') {
-            throw new ParseException("\"", c);
+    private void parseTrue() throws ParseException {
+        String value = string.substring(index, index + 4);
+        if (!value.equals("true")) {
+            throw new ParseException("true", value);
         }
+    }
 
-        while (is_escape_character || c != '"') {
-            if (c == '\\') {
-                is_escape_character = true;
-            }
-            indexEnd++;
+    private void parseFalse() throws ParseException {
+        String value = string.substring(index, index + 5);
+        if (!value.equals("false")) {
+            throw new ParseException("false", value);
         }
+    }
 
-        String extractedString = this.string.substring(index, indexEnd);
-        return extractedString;
+    private void parseNull() throws ParseException {
+        String value = string.substring(index, index + 4);
+        if (!value.equals("null")) {
+            throw new ParseException("null", value);
+        }
     }
 }
