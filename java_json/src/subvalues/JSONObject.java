@@ -12,9 +12,14 @@ public class JSONObject extends JSONValue {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder('{');
-
         HashMap<String, JSONValue> values = (HashMap<String, JSONValue>) this.get();
+        if (values.isEmpty()) {
+            return "{}";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+
         for (String key : values.keySet()) {
             JSONValue value = values.get(key);
             sb.append('"');

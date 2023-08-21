@@ -1,7 +1,6 @@
 package subvalues;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import json.JSONValue;
 
@@ -12,9 +11,13 @@ public class JSONArray extends JSONValue {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder('[');
-
         ArrayList<JSONValue> values = (ArrayList<JSONValue>) this.get();
+        if (values.isEmpty()) {
+            return "[]";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append('[');
         for (JSONValue value : values) {
             sb.append(value.toString());
             sb.append(',');

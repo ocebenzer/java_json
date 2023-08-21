@@ -101,7 +101,8 @@ public class JSONScanner {
         HashMap<String, JSONValue> dict = new HashMap<>();
 
         trimWhitespace();
-        for (c = this.peek(); c != '}'; c = this.read1()) {
+        c = this.peek();
+        while (c != '}') {
             trimWhitespace();
             String key = parseString();
 
@@ -115,7 +116,7 @@ public class JSONScanner {
             dict.put(key, value);
 
             trimWhitespace();
-            c = peek();
+            c = read1();
             if (c != ',' && c != '}') {
                 throw new ParseException(",|}", (char) c);
             }
@@ -133,17 +134,24 @@ public class JSONScanner {
         ArrayList<JSONValue> list = new ArrayList<>();
 
         trimWhitespace();
-        for (c = this.peek(); c != ']'; c = this.read1()) {
+        c = this.peek();
+        while (c != ']') {
             JSONValue value = parseValue();
             list.add(value);
 
             trimWhitespace();
-            c = this.peek();
-            if (c != ',' && c != ']') {
-                throw new ParseException(",|]", (char) c);
+            c = this.read1();
+            switch (c) {
+                case ']':
+                    index--;
+                case ',':
+                    continue;
+                default:
+                    throw new ParseException(",|]", (char) c);
             }
         }
 
+        index++;
         return list;
     }
 
