@@ -3,15 +3,23 @@ package subvalues;
 import json.JSONValue;
 
 public class JSONNumber extends JSONValue {
+    private boolean is_integer = false;
+
     public JSONNumber(double value) {
         super(value);
+    }
+
+    public JSONNumber(double value, boolean is_integer) {
+        super(value);
+        this.is_integer = is_integer;
     }
 
     @Override
     public String toString() {
         Double value = (Double) this.get();
-        // todo
-        // if (value) return Integer.toString((Integer) value)
+        if (is_integer) {
+            return Integer.toString(value.intValue());
+        }
         return Double.toString((Double) value);
     }
 

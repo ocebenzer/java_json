@@ -73,7 +73,7 @@ public class JSONScanner {
             case '8':
             case '9':
             // case '.': // Not in JSON Standarts
-                return new JSONNumber(parseNumber());
+                return parseNumber();
             case 't':
                 parseTrue();
                 return new JSONTrue();
@@ -84,7 +84,7 @@ public class JSONScanner {
                 parseNull();
                 return new JSONNull();
             default:
-                throw new ParseException("Unexpected character: " + c);
+                throw new ParseException("<JSON_BEGIN>", c);
         }
     }
 
@@ -169,9 +169,11 @@ public class JSONScanner {
         return extractedString;
     }
 
-    private Double parseNumber() throws ParseException {
+    private JSONNumber parseNumber() throws ParseException {
         int indexEnd = this.index;
         char c = this.peek(indexEnd++);
+
+        boolean is_integer = true;
 
         // number
         if (c == '-') {
@@ -192,6 +194,7 @@ public class JSONScanner {
 
         // fraction
         if (c == '.') {
+            is_integer = false;
             c = this.peek(indexEnd++);
             while (c >= '0' && c <= '9') {
                 c = this.peek(indexEnd++);
@@ -200,6 +203,7 @@ public class JSONScanner {
 
         // exponent
         if (c == 'e' || c == 'E') {
+            is_integer = false;
             c = this.peek(indexEnd++);
             if (c == '+' || c == '-') {
                 c = this.peek(indexEnd++);
@@ -211,7 +215,7 @@ public class JSONScanner {
 
         String extractedString = this.string.substring(index, indexEnd - 1);
         index = indexEnd - 1;
-        return Double.valueOf(extractedString);
+        return new JSONNumber(Double.valueOf(extractedString), is_integer);
     }
 
     private void parseTrue() throws ParseException {
