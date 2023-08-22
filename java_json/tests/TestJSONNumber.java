@@ -34,7 +34,7 @@ public class TestJSONNumber {
         JSONValue json = JSONValue.parse("0.0");
 
         assertTrue(json instanceof JSONNumber);
-        assertEquals(-0.0, json.get());
+        assertDoubleEquals(-0.0, json.get());
     }
 
     @Test
