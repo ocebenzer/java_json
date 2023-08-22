@@ -1,12 +1,11 @@
 package subvalues;
 
-import java.util.ArrayList;
-
+import json.JSONType;
 import json.JSONValue;
 
 public class JSONString extends JSONValue {
     public JSONString(String value) {
-        super(value);
+        super(value, JSONType._JSONString);
     }
 
     @Override

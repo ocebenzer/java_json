@@ -1,10 +1,11 @@
 package subvalues;
 
+import json.JSONType;
 import json.JSONValue;
 
 public class JSONFalse extends JSONValue {
     public JSONFalse() {
-        super(false);
+        super(false, JSONType._JSONFalse);
     }
 
     @Override

@@ -15,12 +15,12 @@ public class JSONScanner {
     private String string;
     private int index;
 
-    public JSONScanner(String string) {
+    protected JSONScanner(String string) {
         this.string = string;
         this.index = 0;
     }
 
-    public JSONValue parse() throws ParseException {
+    protected JSONValue parse() throws ParseException {
         return this.parseValue();
     }
 
@@ -215,7 +215,11 @@ public class JSONScanner {
 
         String extractedString = this.string.substring(index, indexEnd - 1);
         index = indexEnd - 1;
-        return new JSONNumber(Double.valueOf(extractedString), is_integer);
+
+        if (is_integer) {
+            return new JSONNumber(Integer.valueOf(extractedString));
+        }
+        return new JSONNumber(Double.valueOf(extractedString));
     }
 
     private void parseTrue() throws ParseException {

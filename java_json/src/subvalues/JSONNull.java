@@ -1,10 +1,11 @@
 package subvalues;
 
+import json.JSONType;
 import json.JSONValue;
 
 public class JSONNull extends JSONValue {
     public JSONNull() {
-        super(null);
+        super(null, JSONType._JSONNull);
     }
 
     @Override

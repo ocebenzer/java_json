@@ -1,4 +1,5 @@
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -17,7 +18,23 @@ public class TestJSONNumber {
         JSONValue json = JSONValue.parse("0");
 
         assertTrue(json instanceof JSONNumber);
-        assertDoubleEquals(0, json.get());
+        assertEquals(0, json.get());
+    }
+
+    @Test
+    public void testNegativeZero() throws ParseException {
+        JSONValue json = JSONValue.parse("0");
+
+        assertTrue(json instanceof JSONNumber);
+        assertEquals(-0, json.get());
+    }
+
+    @Test
+    public void testNegativeZero2() throws ParseException {
+        JSONValue json = JSONValue.parse("0.0");
+
+        assertTrue(json instanceof JSONNumber);
+        assertEquals(-0.0, json.get());
     }
 
     @Test
@@ -25,7 +42,7 @@ public class TestJSONNumber {
         JSONValue json = JSONValue.parse("3");
 
         assertTrue(json instanceof JSONNumber);
-        assertDoubleEquals(3,
+        assertEquals(3,
             ((JSONNumber) json).get());
     }
 
@@ -34,7 +51,7 @@ public class TestJSONNumber {
         JSONValue json = JSONValue.parse("-2");
 
         assertTrue(json instanceof JSONNumber);
-        assertDoubleEquals(-2,
+        assertEquals(-2,
             ((JSONNumber) json).get());
     }
 
@@ -86,5 +103,13 @@ public class TestJSONNumber {
 
         assertTrue(json instanceof JSONNumber);
         assertDoubleEquals(-10.0e8, json.get());
+    }
+
+    @Test
+    public void testIntegerVsDouble() throws ParseException {
+        JSONValue json = JSONValue.parse("3");
+
+        assertTrue(json instanceof JSONNumber);
+        assertNotEquals(3.0, json.get());
     }
 }

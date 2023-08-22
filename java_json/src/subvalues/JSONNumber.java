@@ -1,23 +1,22 @@
 package subvalues;
 
+import json.JSONType;
 import json.JSONValue;
+import json.ParseException;
 
 public class JSONNumber extends JSONValue {
-    private boolean is_integer = false;
-
     public JSONNumber(double value) {
-        super(value);
+        super(value, JSONType._JSONNumber);
     }
 
-    public JSONNumber(double value, boolean is_integer) {
-        super(value);
-        this.is_integer = is_integer;
+    public JSONNumber(int value) {
+        super(value, JSONType._JSONInteger);
     }
 
     @Override
     public String toString() {
         Double value = (Double) this.get();
-        if (is_integer) {
+        if (this.getType().equals(JSONType._JSONInteger)) {
             return Integer.toString(value.intValue());
         }
         return Double.toString((Double) value);
@@ -28,10 +27,13 @@ public class JSONNumber extends JSONValue {
         if (!(other instanceof JSONNumber)) {
             return false;
         }
+        JSONNumber number = (JSONNumber) other;
 
-        Double v1 = (Double) this.get();
-        Double v2 = (Double) ((JSONNumber) other).get();
-        
-        return v1.equals(v2);
+        // 3.0 does not equal to 3
+        if (!this.getType().equals(number.getType())) {
+            return false;
+        }
+
+        return this.get().equals(number.get());
     }
 }
