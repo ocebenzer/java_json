@@ -1,5 +1,5 @@
-.vscode
+.vscode/
+bin/
 
+*.class
 *.jar
-
-java_json/bin/
